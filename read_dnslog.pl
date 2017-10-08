@@ -9,6 +9,20 @@
 #      VERSION: 0.0
 #      CREATED: 27.07.2016 20:44:02
 #     REVISION: 0
+#     Copyright (C) 2016} Shiny Cat
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #===============================================================================
 
 use strict;
@@ -17,12 +31,67 @@ use utf8;
 use 5.020;
 use File::Slurp;
 use List::MoreUtils qw(uniq);
-use List::Compare;
 
 # patterns of whitelisted sites that i don't want to see in output.
 my @white =	qw(
-	github, debian, steam
+	githib\.com^ debian steam perldoc perlmaven perlmeme perlmonk 
+	perltrick ntppool gentoo metacpan sberbank.ru^ .*disk\.yandex.*
+	.*wikibooks\.org .*winehq\.org vifm\.info login.wikimedia.org 
+	clamav\.net duckduckgo-owned-server\.yahoo\.net wikipedia\.org
+	wikimedia\.org torproject\.org online\.sberbank\.ru omc\.ru
+	newworldinteractive\.com mozilla\.com mozilla\.org mozilla\.net
+	linuxquestions\.org kernel\.org gosuslugi\.ru github\.com githubapp\.com
+	githubusercontent\.com autistici\.org askubuntu\.com 2mb\.ru
+	^vl\.ru ^vk.com map\.vl\.ru comments.vl.ru static.vl.ru xmms2.org
+	api-maps.yandex.ru mirror.yandex.ru ^youtube.com ^torrentino.ru
+	syslinux.ru .*starmadedock.net linux.com linux-magazine.com
+	linuxandubuntu.com linuxtopia.org lurkmore lwn.net static.lwn.net
+	lifehacker.com git.linaro.org flibusta kernelnewbies.org
+	kernelpodcast.org ^4pda.ru ^amazon.com ^asus.com 
+	creativecommons.org dd-wrt .*disconnect\.me dns-shop.ru
+	.*duckduckgo.com ebay.com eff.org ^facebook.com ^fanfics.me
+	.*farpost.ru ^google\.[cr][ou]m? gpuhash.me gravatar.com
+	gsmarena.com st.gsmarena.com habrahabr.ru habrastorage.org
+	.*openwrt.org samsung.com shallow.space sourceforge.net
+	redditstatic.com .*star-made.org starmadepedia.net .*ubuntu.ru
+	twitter.com .*addictivetips.com
+s3.amazonaws.com forums.androidcentral.com zxing.appspot.com
+.*[ci][dm][ng].asus.com benchminecraft.com bestvpn.com
+dl.dropboxusercontent.com linux.*.disqus.com starmade.disqus.com
+knowyourmobile-com.disqus.com addictivetips.disqus.com .*perl.org
+img.*fanfics.me .*godaddy.com pop.gmail.com accounts.google.com
+apis.google.com clients1.google.com ipv4.google.com safebrowsing.google.com
+translate.google.com ajax.googleapis.com chart.googleapis.com
+maps.googleapis.com translate.googleapis.com [cs]s[il]\.gstatic.com
+^gstatic.com habracdn.net iozone.org kinja.*.com knowyourmobile.com
+cdn.*knowyourmobile.com blog.last.fm cdn.last.fm last.fm yandex\.ocsp.*
+linux.org.ru reddit.com redditmedia.com stackoverflow.com ocsp.starfieldtech.com
+ocsp.startssl.com licensebuttons.net newskernel.com ok.ru .*ocsp.omniroot.com
+philadelphiaweekly qrstuff.com out.reddit.com tmtm.ru w3.org 123rf.com hsto.orgw
+.*111bashni.ru support.amd.com .*3mdeb.com bp.blogspot.com texturend.blogspot.com
+avtovzglyad.ru .*archlinux.org cio.com shmm.clan.su consultant.ru cpan.org
+vkontakte.ru cyberciti.biz ffmpeg.org virtualbox.org manpages.ubuntu.com
+sweethome3d.com acronyms.thefreedictionary.com superuser.com bt.*.rutracker.cc 
+^rutracker.org debuntu.org doom9.org flaska.net i3wm.org j4tools.org nabble.com
+nativeroll.tv ^nnm.me ^openbenchmarking.org opennet.ru pasterbin.com proft.me
+\.qt\.io .*duckduckgo\.com ^ocsp\.digicert\.com ^habrahabr\.ru ^ocsp\.comodoca\.com
+.*\.gentoo\.org ^habracdn ^habrastorage ^ocsp.*letsencrypt\.org img-fotki\.yandex\.ru
+c?s5?-?1?.*\.4pda\..* ^4pda\.biz ^511\.ru .*\.onion ^7-zip\.org ^7tor\.org
+
+8war\.ru academic.ru acrosync.com ^adobe.com ^air-gun.ru ^air.*gun.*\. 
+^alfabank.ru ^click.alfabank.ru ^aliexpress ^3dnews.ru ^3dcad ^39soft map.*2gis
+7digital\.com ^2checkout\.com alsa-project.org ^.*.amd.com 
+apache.org .*zugaina.org zlib.net ^raspberry .*blogspot\.[rc][uo]m? 
+.*discorda?p?p?.com e2e4online ocsp.entrust.net nvidoa.com nylas.com
 );
+
+#my @grey qw ( ^1trailer.ru appspot.com antivirus.ru );
+my @grey = ();
+
+my $whitelist = join("|", @white);
+my $greylist  = join("|", @grey);
+$whitelist = qr/$whitelist/;
+$greylist  = qr/$greylist/;
 
 my $log = read_file($ARGV[0]);
 my $blocked_ads += () = $log =~ /to 127.0.0.1/g;
@@ -33,9 +102,8 @@ $log =~ s/\w+?\s\d+\s\d+:\d+.*:\s//g;
 my @log = grep /reply/, split /\n/, $log;
 @log = map {/reply\sw?w?w?\.?(.*?)\sis\s.*/} @log;
 @log = uniq @log;
-my $comparator = List::Compare->new('-u', \@log, \@white);
-@log = $comparator -> get_unique;
-@log = map {(join(".", reverse /([^\.]+?)\./g) . "\t" . $_) unless $_~~@white} @log;
+#@log = map {(join(".", reverse /([^\.]+?)\./g) . "\t" . $_) unless ($_~~$whitelist or $_~~$greylist)} @log;
+@log = map {(join(".", reverse /([^\.]+?)\./g) . "\t" . $_) unless ($_~~$whitelist )} @log;
 
 for (sort @log) {
 		s/.*\t//;
