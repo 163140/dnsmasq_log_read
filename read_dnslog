@@ -28,8 +28,28 @@ use utf8;
 use 5.020;
 use File::Slurp;
 use List::MoreUtils qw(uniq);
+use Getopt::Long;
+use autodie;
+use experimental qw(smartmatch);
+use Pod::Usage;
 
-unless ARGV[0] die "No input file given";
+
+my $help		= 0						;
+my $whitelist	= ''					; # good domains
+my $greylist	= ''					; # acceptable domains
+my $logfile		= '/var/log/dnsmasq.log'; # logfile to analyze
+my $man			= 0						; # display full doc
+
+GetOptions(
+    'help|?|h'			=> \$help		,
+	#'whitelist|w=s'		=> \$whitelist	, # future use
+	#'greylist|g=s'		=> \$greylist	, # future use
+	'logfile|l=s'		=> \$logfile	,
+	'man'				=> \$man		,
+) or die(pod2usage(1));
+
+pod2usage(-verbose => 0) if $help		;
+pod2usage(-verbose => 2) if $man		;
 
 # patterns of whitelisted sites that i don't want to see in output.
 my @white =	qw(
@@ -86,12 +106,12 @@ apache.org .*zugaina.org zlib.net ^raspberry .*blogspot\.[rc][uo]m?
 
 my @grey = ();
 
-my $whitelist = join("|", @white);
-my $greylist  = join("|", @grey);
-$whitelist = qr/$whitelist/;
-$greylist  = qr/$greylist/;
+$whitelist = qr/join("|", @white)/;
+$greylist  = qr/join("|", @grey)/;
+#$whitelist = qr/$whitelist/;
+#$greylist  = qr/$greylist/;
 
-my $log = read_file($ARGV[0]);
+my $log = read_file($logfile);
 my $blocked_ads += () = $log =~ /to 127.0.0.1/g;
 my $cached += () = $log =~ /cached/g;
 my $total_dns += () = $log =~ /query/g;
@@ -109,5 +129,39 @@ for (sort @log) {
 };
 say "Cached queries: $cached, Blocked: $blocked_ads, Total: $total_dns";
 
+
+
+=head1 NAME
+
+read_dnslog - A dnsmasq log reader and parser
+
+=head1 SYNOPSIS
+
+read_dnslog [options]
+
+ Options:
+   -h  	-help       	display this message
+   -w	-whitelist	list of good domains. One line per domain.
+   			Can be regex. Not implemented yet.
+   -g	-greylist	list of acceptable domains. One line per domain.
+   			Can be regex. Not implemented yet.
+   -l  	-logfile        Dnsmasq logfile. By default /var/log/dnsmasq.log
+   -man			Full information
+
+=head1 DESCRIPTION
+
+This script implements a simple dnsmasq logfile read and parse for further 
+analysis.
+
+=head1 AUTHOR
+
+Shiny Cat aka EA1A87. 163140@autistici.org
+
+=head1 COPYRIGHT
+
+This library is open source software and distributed ander terms GNU General
+Public License v3 or (at you option) later.
+
+=cut
 
 #vim:ts=4
