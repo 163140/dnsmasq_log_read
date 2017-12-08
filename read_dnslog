@@ -5,9 +5,7 @@
 #  DESCRIPTION: Read, parse, and show dns queries from dnsmasq log file
 # REQUIREMENTS: File::Slurp List::MoreUtils List::Compare
 #       AUTHOR: 163140@autistici.org
-#      VERSION: 0.0
 #      CREATED: 27.07.2016 20:44:02
-#     REVISION: 0
 #     Copyright (C) 2016} Shiny Cat
 #
 #   This program is free software: you can redistribute it and/or modify
@@ -30,6 +28,8 @@ use utf8;
 use 5.020;
 use File::Slurp;
 use List::MoreUtils qw(uniq);
+
+unless ARGV[0] die "No input file given";
 
 # patterns of whitelisted sites that i don't want to see in output.
 my @white =	qw(
@@ -84,7 +84,6 @@ apache.org .*zugaina.org zlib.net ^raspberry .*blogspot\.[rc][uo]m?
 .*discorda?p?p?.com e2e4online ocsp.entrust.net nvidoa.com nylas.com
 );
 
-#my @grey qw ( ^1trailer.ru appspot.com antivirus.ru );
 my @grey = ();
 
 my $whitelist = join("|", @white);
