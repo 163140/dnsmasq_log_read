@@ -1,0 +1,23 @@
+NAME
+
+read_dnslog - A dnsmasq log reader and parser
+
+SYNOPSIS
+
+read_dnslog [options]
+
+ Options:
+   -h  	-help       	display this message
+   -w	-whitelist		list of acceptable domains. One line per domain.
+			   			By default "/etc/whitelist.domain". Can be perl regex.
+						One comment starting from # per line
+   -l  	-logfile        Dnsmasq logfile. By default /var/log/dnsmasq.log
+   -s  	-stat	        Display only stats about dns queries
+   -man					Full information
+
+DESCRIPTION
+
+This script implements a simple dnsmasq logfile read and excluding from output
+whiltelisted and greylisted domains. Whitelist and greylist contain domains name
+(one per line) or perl regex (one per line). If no whitelist and/or greylist
+given script use an empty data.
