@@ -1,6 +1,5 @@
 1. More complex input data check
 3. Blacklist from file
 5. Improve man
-6. "stat" option. Show only bloked, cached, total dns queries.
 7. "bad" option. Show bad (advert, and track) domains according to internal patterns
 
