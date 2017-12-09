@@ -44,12 +44,11 @@ sub Read_2_List {
 }
 
 
-
 my $help		= 0							;
 my $white		= '/etc/whitelist.domain'	; # good domains
 my $logfile		= '/var/log/dnsmasq.log'	; # logfile to analyze
 my $man			= 0							; # display full doc
-
+my $statonly	= 0							; # stats only
 
 
 GetOptions(
@@ -57,6 +56,7 @@ GetOptions(
 	'whitelist|w=s'		=>		\$white		,
 	'logfile|l=s'		=>		\$logfile	,
 	'man'				=>		\$man		,
+	'stat|s'			=>		\$statonly	,
 ) or die(pod2usage( 1 ));
 
 pod2usage( -verbose		=> 0 )	if $help				;
@@ -73,6 +73,7 @@ my @log					=		&Read_2_List( $logfile );
 my $blocked_ads			= grep { /is 0.0.0.0/ }	@log	;
 my $cached				= grep { /cached/ }		@log	;
 my $total_dns			= grep { /query/ }		@log	;
+
 @log					= grep /reply.*is/,		@log	;  
 @log					= map  { /reply\sw?w?w?
 								 \.?(.*?)\sis\s
@@ -81,11 +82,12 @@ my $total_dns			= grep { /query/ }		@log	;
 										if @white		;
 @log					= uniq					@log	;
 
-
-for (sort @log) {
-	s/.*\t//;
-	say
-};
+if (! $statonly) {
+	for (sort @log) {
+		s/.*\t//;
+		say
+	};
+}
 say "Cached queries: $cached, Blocked: $blocked_ads, Total: $total_dns";
 
 
@@ -104,6 +106,7 @@ read_dnslog [options]
    			By default "/etc/whitelist.domain". Can be perl regex.
 			One comment starting from # per line
    -l  	-logfile        Dnsmasq logfile. By default /var/log/dnsmasq.log
+   -s  	-stat	        Display only stats about dns queries
    -man			Full information
 
 =head1 DESCRIPTION
